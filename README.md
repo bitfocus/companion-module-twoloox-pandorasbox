@@ -46,7 +46,7 @@ Companion module for controlling **Christie/TwoLooX Pandoras Box** media servers
 
 2. **Clone and Install:**
    ```powershell
-   git clone https://dev.azure.com/twoloox/Companion%20Plugins/_git/companion-module-twoloox-pandorasbox
+   git clone https://github.com/PandorasBoxSDK/companion-module-twoloox-pandorasbox.git
    cd companion-module-twoloox-pandorasbox
    yarn install
    ```
@@ -123,26 +123,10 @@ The module will automatically:
 - **Commands Implemented:** 15+ (Transport, Cue, Programming, Project, SMPTE)
 - **Polling:** Adaptive rate based on sequence state
 
-## Documentation
-
-- [docs/status.md](docs/status.md) - Complete feature list and implementation status
-- [docs/learnings.md](docs/learnings.md) - Protocol quirks and debugging notes
-- [docs/plan.md](docs/plan.md) - Original development plan
-- [reference/](reference/) - SDK references and examples
-
 ## Known Limitations
-
 - No feedback implementation yet (status display only via variables)
 - Cue discovery not implemented (manual cue ID entry required)
 - SMPTE mode cannot be read back (write-only command)
-
-## Future Enhancements
-
-See [docs/status.md](docs/status.md) for the full roadmap including:
-- Feedbacks (sequence status, SMPTE mode)
-- Parameter control (Layer opacity, position, scale)
-- Device selection and resource assignment
-- Playlist management
 
 ## License
 
