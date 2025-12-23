@@ -3,7 +3,7 @@
   "id": "twoloox-pandorasbox",
   "name": "twoloox Pandoras Box",
   "shortname": "twoloox-pandorasbox",
-  "description": "Control twoloox Pandoras Box V8 over the PandorasAutomation protocol.",
+  "description": "Control twoloox Pandoras Box V8.",
   "version": "0.0.0",
   "license": "MIT",
   "author": "twoloox GmbH",

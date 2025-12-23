@@ -8,8 +8,16 @@ export interface SequenceInfo {
   name: string
 }
 
+export interface CueInfo {
+  nextCueId: number
+  nextCueName: string
+  nextCueMode: number  // 0=Pause, 1=Play, 2=Stop, 3=Jump, 4=Wait
+}
+
 export interface PollHandlers {
   onSequenceTime?: (seqId: number, h: number, m: number, s: number, f: number) => void
+  onSequenceCountdown?: (seqId: number, h: number, m: number, s: number, f: number) => void
+  onSequenceCueInfo?: (seqId: number, cueInfo: CueInfo) => void
   onNextCueTime?: (h: number, m: number, s: number, f: number) => void
   onTransport?: (state: TransportState) => void
   onSequenceTransport?: (seqId: number, state: TransportState) => void
@@ -27,6 +35,8 @@ class SequenceConnection {
   private pollTimer: NodeJS.Timeout | null = null
   private connected = false
   private onTime: (h: number, m: number, s: number, f: number) => void
+  private onCountdown: (h: number, m: number, s: number, f: number) => void
+  private onCueInfo: (cueInfo: CueInfo) => void
   private onDebug?: (message: string) => void
   private currentState: TransportState = 'Unknown'
 
@@ -38,12 +48,16 @@ class SequenceConnection {
     domain: number,
     seqId: number,
     onTime: (h: number, m: number, s: number, f: number) => void,
+    onCountdown: (h: number, m: number, s: number, f: number) => void,
+    onCueInfo: (cueInfo: CueInfo) => void,
     onDebug?: (message: string) => void
   ) {
     this.host = host
     this.domain = domain
     this.seqId = seqId
     this.onTime = onTime
+    this.onCountdown = onCountdown
+    this.onCueInfo = onCueInfo
     this.onDebug = onDebug
   }
 
@@ -124,6 +138,14 @@ class SequenceConnection {
     const seqIdBuf = Buffer.alloc(4)
     seqIdBuf.writeInt32BE(this.seqId)
     await this.send(CommandId.GetSeqTime, [seqIdBuf])
+    // Also request countdown to next cue
+    const seqIdBuf2 = Buffer.alloc(4)
+    seqIdBuf2.writeInt32BE(this.seqId)
+    await this.send(CommandId.GetRemainingTimeUntilNextCue, [seqIdBuf2])
+    // Also request cue info (for next cue name/mode)
+    const seqIdBuf3 = Buffer.alloc(4)
+    seqIdBuf3.writeInt32BE(this.seqId)
+    await this.send(CommandId.GetCurrentTimeCueInfo, [seqIdBuf3])
   }
 
   private handleData(data: Buffer): void {
@@ -140,6 +162,62 @@ class SequenceConnection {
         const s = data.readInt32BE(27)
         const f = data.readInt32BE(31)
         this.onTime(h, m, s, f)
+      } else if (cmdId === CommandId.GetRemainingTimeUntilNextCue && data.length >= 35) {
+        const h = data.readInt32BE(19)
+        const m = data.readInt32BE(23)
+        const s = data.readInt32BE(27)
+        const f = data.readInt32BE(31)
+        this.onCountdown(h, m, s, f)
+      } else if (cmdId === CommandId.GetCurrentTimeCueInfo) {
+        // Parse CueInfo response.
+        // StringNarrow format: 2-byte length prefix (BE) + chars
+        // Layout: currentTime(4 ints), previousCueId(int), previousCueName(StringNarrow),
+        //         previousCueTime(4 ints), previousCueMode(int),
+        //         nextCueId(int), nextCueName(StringNarrow), nextCueTime(4 ints), nextCueMode(int)
+        try {
+          let offset = 19
+
+          // current sequence time (hours/minutes/seconds/frames) - 4 ints
+          offset += 16
+
+          // previousCueId
+          offset += 4
+
+          // previousCueName - StringNarrow: 2-byte length + chars
+          if (offset + 2 > data.length) return
+          const prevNameLen = data.readInt16BE(offset)
+          offset += 2 + prevNameLen
+
+          // previousCueTime (4 ints)
+          offset += 16
+
+          // previousCueMode
+          offset += 4
+
+          // nextCueId
+          if (offset + 4 > data.length) return
+          const nextCueId = data.readInt32BE(offset)
+          offset += 4
+
+          // nextCueName - StringNarrow: 2-byte length + chars
+          if (offset + 2 > data.length) return
+          const nextNameLen = data.readInt16BE(offset)
+          offset += 2
+          if (offset + nextNameLen > data.length) return
+          const nextCueName = data.toString('latin1', offset, offset + nextNameLen)
+          offset += nextNameLen
+
+          // nextCueTime (4 ints)
+          offset += 16
+
+          // nextCueMode
+          if (offset + 4 > data.length) return
+          const nextCueMode = data.readInt32BE(offset)
+          
+          this.onCueInfo({ nextCueId, nextCueName, nextCueMode })
+        } catch (e) {
+          this.onDebug?.(`SeqConn[${this.seqId}] CueInfo parse error: ${e}`)
+        }
       }
     } catch (e) {
       this.onDebug?.(`SeqConn[${this.seqId}] parse error: ${e}`)
@@ -293,6 +371,12 @@ export class PBClient {
           seqId,
           (h, m, s, f) => {
             this.pollHandlers.onSequenceTime?.(seqId, h, m, s, f)
+          },
+          (h, m, s, f) => {
+            this.pollHandlers.onSequenceCountdown?.(seqId, h, m, s, f)
+          },
+          (cueInfo) => {
+            this.pollHandlers.onSequenceCueInfo?.(seqId, cueInfo)
           },
           undefined  // No debug logging for sequence connections
         )

@@ -19,9 +19,19 @@ export enum CommandId {
   GetSeqTransportMode = 72,
   GetSeqTime = 73,
   GetRemainingTimeUntilNextCue = 78,
+  GetCurrentTimeCueInfo = 295,
   // Sequence discovery (from official enum)
   GetSequenceIds = 425,
   GetSequenceName = 426,
+}
+
+// Cue play modes
+export enum CuePlayMode {
+  Pause = 0,
+  Play = 1,    // Continue
+  Stop = 2,
+  Jump = 3,
+  Wait = 4,
 }
 
 export const DEFAULT_POLL_INTERVAL_MS = 200

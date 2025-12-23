@@ -2,7 +2,7 @@
 	"id": "twoloox-pandorasbox",
 	"name": "twoloox-pandorasbox",
 	"shortname": "pandorasbox",
-	"description": "Control twoloox Pandoras Box V8 over the PandorasAutomation protocol.",
+	"description": "Control twoloox Pandoras Box V8.",
 	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "",
@@ -22,5 +22,5 @@
 	},
 	"manufacturer": "twoloox",
 	"products": ["Pandoras Box"],
-	"keywords": ["pandoras box", "twoloox", "pbau"]
+	"keywords": ["pandoras box", "twoloox", "coolux"]
 }

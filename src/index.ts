@@ -8,8 +8,8 @@ import { GetActionsList } from './actions.js'
 import { GetConfigFields, type DeviceConfig } from './config.js'
 import { GetFeedbacksList, type ModuleState } from './feedback.js'
 import { GetPresetsList } from './presets.js'
-import { PBClient, type TransportState, type SequenceInfo } from './client.js'
-import { GetVariableDefinitions, GetSequenceVariableDefinitions, GetSequenceVariableValues, GetSequenceStatusVariableDefinitions, GetSequenceStatusVariableValues, GetSequenceTimeVariableDefinitions, GetSequenceTimeVariableValues, type SequenceTime } from './variables.js'
+import { PBClient, type TransportState, type SequenceInfo, type CueInfo } from './client.js'
+import { GetVariableDefinitions, GetSequenceVariableDefinitions, GetSequenceVariableValues, GetSequenceStatusVariableDefinitions, GetSequenceStatusVariableValues, GetSequenceTimeVariableDefinitions, GetSequenceTimeVariableValues, GetSequenceCountdownVariableDefinitions, GetSequenceCountdownVariableValues, GetSequenceNextCueVariableDefinitions, GetSequenceNextCueVariableValues, type SequenceTime } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 
 class TwolooxPandorasInstance extends InstanceBase<DeviceConfig> {
@@ -22,6 +22,8 @@ class TwolooxPandorasInstance extends InstanceBase<DeviceConfig> {
   private sequenceRefreshTimer: NodeJS.Timeout | undefined
   private sequenceStates: Map<number, TransportState> = new Map()
   private sequenceTimes: Map<number, SequenceTime> = new Map()
+  private sequenceCountdowns: Map<number, SequenceTime> = new Map()
+  private sequenceCueInfos: Map<number, CueInfo> = new Map()
 
   public getSequenceChoices(): { id: number; label: string }[] {
     if (this.sequences.length === 0) {
@@ -102,6 +104,14 @@ class TwolooxPandorasInstance extends InstanceBase<DeviceConfig> {
         this.sequenceTimes.set(seqId, { h, m, s, f })
         this.updateSequenceTimeVariables()
       },
+      onSequenceCountdown: (seqId, h, m, s, f) => {
+        this.sequenceCountdowns.set(seqId, { h, m, s, f })
+        this.updateSequenceCountdownVariables()
+      },
+      onSequenceCueInfo: (seqId, cueInfo) => {
+        this.sequenceCueInfos.set(seqId, cueInfo)
+        this.updateSequenceNextCueVariables()
+      },
       onSequencesUpdated: (sequences) => {
         this.log('info', `Received ${sequences.length} sequences from Pandoras Box`)
         this.sequences = sequences
@@ -151,12 +161,14 @@ class TwolooxPandorasInstance extends InstanceBase<DeviceConfig> {
     const seqVars = GetSequenceVariableDefinitions(this.sequences)
     const statusVars = GetSequenceStatusVariableDefinitions(this.sequences)
     const timeVars = GetSequenceTimeVariableDefinitions(this.sequences)
-    this.setVariableDefinitions([...baseVars, ...seqVars, ...statusVars, ...timeVars])
+    const countdownVars = GetSequenceCountdownVariableDefinitions(this.sequences)
+    const nextCueVars = GetSequenceNextCueVariableDefinitions(this.sequences)
+    this.setVariableDefinitions([...baseVars, ...seqVars, ...statusVars, ...timeVars, ...countdownVars, ...nextCueVars])
 
     // Set the sequence variable values
     const seqValues = GetSequenceVariableValues(this.sequences)
     this.setVariableValues(seqValues)
-    this.log('debug', `Created ${this.sequences.length} sequence variables (name, status, time)`)
+    this.log('debug', `Created ${this.sequences.length} sequence variables (name, status, time, countdown, nextcue)`)
   }
 
   private updateSequenceStatusVariables(): void {
@@ -167,6 +179,16 @@ class TwolooxPandorasInstance extends InstanceBase<DeviceConfig> {
   private updateSequenceTimeVariables(): void {
     const timeValues = GetSequenceTimeVariableValues(this.sequences, this.sequenceTimes)
     this.setVariableValues(timeValues)
+  }
+
+  private updateSequenceCountdownVariables(): void {
+    const countdownValues = GetSequenceCountdownVariableValues(this.sequences, this.sequenceCountdowns)
+    this.setVariableValues(countdownValues)
+  }
+
+  private updateSequenceNextCueVariables(): void {
+    const nextCueValues = GetSequenceNextCueVariableValues(this.sequences, this.sequenceCueInfos)
+    this.setVariableValues(nextCueValues)
   }
 
   private updatePresetDefinitions(): void {
