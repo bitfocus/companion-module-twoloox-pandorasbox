@@ -106,12 +106,6 @@ The module will automatically:
 - Create dynamic presets
 - Start timecode polling for playing sequences
 
-## Dev Scripts
-
-- `yarn dev` — TypeScript watch mode → dist
-- `yarn build` — Clean build
-- `yarn lint` — ESLint check
-
 ## Architecture
 
 ### Multi-Connection Design
@@ -134,4 +128,4 @@ See project license file.
 
 ## Support
 
-For issues and feature requests, contact TwoLooX or submit via Azure DevOps.
+For issues and feature requests, contact twoloox GmbH
