@@ -3,7 +3,7 @@
 	"name": "twoloox-pandorasbox",
 	"shortname": "pandorasbox",
 	"description": "Control twoloox Pandoras Box V8.",
-	"version": "4.0.0",
+	"version": "3.0.0",
 	"license": "MIT",
 	"repository": "",
 	"bugs": "",
@@ -13,7 +13,7 @@
 			"email": "daniel.kaminski@twoloox.de"
 		}
 	],
-	"legacyIds": [],
+	"legacyIds": [chrisite-pandorasbox],
 	"runtime": {
 		"type": "node18",
 		"api": "nodejs-ipc",
