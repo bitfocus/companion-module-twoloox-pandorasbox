@@ -37,7 +37,7 @@ Sequence selection for editing
 
 ✅ Programming
 Store Active to Sequence
-Store Active to Beginning
+Store Active to Container Beginning
 Clear All Active
 Reset All
 

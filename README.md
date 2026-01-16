@@ -14,7 +14,7 @@ Companion module for controlling **twoloox Pandoras Box** media servers via the 
 
 ✅ **Programming**
 - Store Active to Sequence
-- Store Active to Beginning
+- Store Active to Container Beginning
 - Clear All Active
 - Reset All
 
