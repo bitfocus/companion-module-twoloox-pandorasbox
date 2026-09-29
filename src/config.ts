@@ -1,33 +1,41 @@
-import { Regex, SomeCompanionConfigField } from '@companion-module/base'
+import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
 
-export interface DeviceConfig {
-  host?: string
-  domain?: string
+export type DeviceConfig = {
+	host: string
+	domain: string
+	debugTraffic: boolean
 }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
-  return [
-    {
-      type: 'static-text',
-      id: 'info',
-      width: 12,
-      label: 'Information',
-      value: 'twoloox Pandoras Box V8 control via PandorasAutomation protocol',
-    },
-    {
-      type: 'textinput',
-      id: 'host',
-      width: 6,
-      label: 'Target IP',
-      regex: Regex.IP,
-    },
-    {
-      type: 'textinput',
-      id: 'domain',
-      width: 6,
-      label: 'Domain',
-      default: '0',
-      regex: Regex.NUMBER,
-    },
-  ]
+	return [
+		{
+			type: 'static-text',
+			id: 'info',
+			width: 12,
+			label: 'Information',
+			value: 'twoloox Pandoras Box V8 control via PandorasAutomation protocol',
+		},
+		{
+			type: 'textinput',
+			id: 'host',
+			width: 6,
+			label: 'Target IP',
+			regex: Regex.IP,
+		},
+		{
+			type: 'textinput',
+			id: 'domain',
+			width: 6,
+			label: 'Domain',
+			default: '0',
+			regex: Regex.NUMBER,
+		},
+		{
+			type: 'checkbox',
+			id: 'debugTraffic',
+			width: 6,
+			label: 'Log protocol traffic (debug)',
+			default: false,
+		},
+	]
 }
