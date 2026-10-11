@@ -2,6 +2,18 @@
 
 All notable changes to this module are documented in this file.
 
+## [3.1.3-beta.1] - 2026-10-11
+
+### Security
+
+- Updated `colord` to 2.10.0 (GHSA-2wm5-q62r-hmrv). It is the only affected package shipped inside the module (via `@companion-module/base`) and had fallen back to 2.9.3 when the 3.1.2 lockfile conflict was resolved.
+- Updated development-only dependencies with known advisories: `brace-expansion`, `@isaacs/brace-expansion`, `minimatch`, `picomatch` and `yaml`. `braces` is no longer installed at all (see `lint-staged` below). `yarn npm audit` now reports no issues.
+
+### Changed
+
+- Upgraded ESLint to v10 (ESLint 9 is no longer supported) and `typescript-eslint` to 8.71.
+- Upgraded `lint-staged` to v16, which no longer depends on `micromatch`/`braces`.
+
 ## [3.1.2] - 2026-09-24
 
 ### Fixed
