@@ -2,9 +2,17 @@
 
 All notable changes to this module are documented in this file.
 
+## [3.1.5] - 2026-11-02
+
+First release in the Companion module library since 3.0.1, so it also includes all changes listed under 3.1.0 to 3.1.4 below. Requires Companion 5.0 or later.
+
+### Changed
+
+- Documentation: the in-app help now lists all actions, feedbacks and variables, the Companion requirement is corrected to 5.0 or later, and the port setting was removed from the documentation (the port is always 6211).
+
 ## [3.1.4] - 2026-10-30
 
-First release in the Companion module library since 3.0.1, so it also includes all changes listed under 3.1.0 to 3.1.2 below. Requires Companion 5.0 or later. Version 3.1.3 was tagged but never published.
+Not published in the Companion module library. Version 3.1.3 was tagged but never published either.
 
 ### Security
 
