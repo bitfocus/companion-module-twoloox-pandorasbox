@@ -1,88 +1,61 @@
 # companion-module-twoloox-pandorasbox
 
-Companion module for controlling **twoloox Pandoras Box** media servers via the **PandorasAutomation (PBAU)** TCP protocol.
+[Bitfocus Companion](https://bitfocus.io/companion) module for controlling **twoloox Pandoras Box** media servers (V8 and newer) via the **PandorasAutomation (PBAU)** TCP protocol.
+
+Requires **Companion 5.0 or later** (the module uses `@companion-module/base` 2.1). On older Companion versions, use module version 3.0.1, which targets `@companion-module/base` 1.x.
+
+User documentation (configuration, actions, feedbacks, variables) is in [companion/HELP.md](companion/HELP.md), which Companion also shows as the module's help. Changes per version are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
-✅ **Sequence Control**
-- Play/Pause/Stop sequences
-- Goto Cue, Next/Last Cue
-- Ignore Next Cue
-- Set Playhead (absolute or relative, accepts hh:mm:ss:ff or plain digits, e.g. `1000` = 10s)
-- SMPTE Timecode Mode (None/Send/Receive)
-- Real-time timecode display (30fps)
-- Sequence selection for editing
-
-✅ **Programming**
-- Store Active to Sequence
-- Store Active to Container Beginning
-- Clear All Active
-- Reset All
-
-✅ **Project Management**
-- Save Project
-- Toggle Site Fullscreen
-- Set Site IP Address
-- Apply GUI View
-
-✅ **Sequence Opacity**
-- Sequence Opacity Fade: fade a sequence's visibility in/out to a target (0-100%) over a configurable duration, with a choice of curve (Linear, Ease In, Ease Out, Ease In-Out, S-Curve)
-- Live sequence opacity variable
-
-✅ **Dynamic Features**
-- Automatic sequence discovery
-- Per-sequence timecode polling (30x/sec when playing)
-- 26+ dynamic presets (4 per sequence)
-- Real-time status variables
-
-✅ **Feedbacks**
-- Sequence transport state matches (per sequence)
-- Remaining time until next cue under threshold
-
-## Tested Versions
-
-- **Companion:** v5.0.5
-- **Pandoras Box:** v8.11.3
-
-Requires **Companion v4.3 or later** (this module uses `@companion-module/base` v2.x). If you're on an older Companion version, use [module version 3.0.1](https://github.com/bitfocus/companion-module-twoloox-pandorasbox/releases/tag/v3.0.1) instead, which targets `@companion-module/base` v1.x.
+- **Sequences:** Play/Pause/Stop, toggle Play/Pause, goto cue, next/last cue, ignore next cue, Set Playhead (absolute or relative), SMPTE timecode mode, select for editing
+- **Opacity:** Sequence Opacity Fade with selectable curves, live opacity variable
+- **Programming:** Store Active (to sequence or container beginning), Clear All Active, Reset All
+- **Project and sites:** save project, toggle site fullscreen, set site IP, recall GUI view
+- **Variables per sequence:** name, status, timecode, countdown to the next cue, countup since the previous cue, next and previous cue (name, ID, mode), opacity
+- **Feedbacks:** sequence transport state, remaining time until the next cue below a threshold
+- **Presets** generated per sequence, plus general presets
+- Automatic sequence discovery and automatic reconnect
 
 ## Installation
 
-Install directly in Companion via the module library (when published) or use the built `dist/` folder.
-
-## Configuration
-
-After adding the module in Companion:
-
-1. **Host:** IP address of Pandoras Box server (e.g., `192.168.1.100`)
-2. **Port:** Default `6211`
-3. **Domain:** Default `0`
-4. **Log protocol traffic (debug):** Off by default. Enable and set the connection's log level to Debug in Companion to capture a hex dump of every sent/received PBAU message, useful for troubleshooting.
-
-The module will automatically:
-- Discover all sequences
-- Create dynamic presets
-- Start timecode polling for playing sequences
+- **Module library:** install the module from Companion's module manager.
+- **Manually:** download the `.tgz` file from a release, then import it in Companion via _Modules > Import module package_.
 
 ## Architecture
 
-### Multi-Connection Design
-- **Main TCP Connection:** Sequence discovery, status polling (5x/sec), commands
-- **Per-Sequence Connections:** Independent timecode polling (30x/sec when playing, 5x/sec when stopped)
+- **Main TCP connection:** sequence discovery, transport/opacity polling (5x per second), commands. Queries whose answers don't identify their sequence run strictly one at a time, so every answer is matched to the right request.
+- **One TCP connection per sequence:** timecode, countdown and cue info, polled 30x per second while playing and 5x per second otherwise.
+- **Protocol notes:** mixed endianness (big-endian headers, little-endian sequence ID lists), opacity is read in 0-65535 but written in 0-255, error answers don't say which request failed.
 
-### Protocol Details
-- **PBAU Header:** Mixed endianness (BE headers, LE sequence IDs)
-- **Commands Implemented:** 20+ (Transport, Cue, Programming, Project, SMPTE, Opacity)
-- **Polling:** Adaptive rate based on sequence state
+## Development
 
-## Known Limitations
-- Cue discovery not implemented (manual cue ID entry required)
-- SMPTE mode cannot be read back (write-only command)
+Requires Node.js 22 and Yarn 4 via Corepack (`corepack enable`).
+
+```bash
+yarn install
+yarn build        # compile TypeScript to dist/
+yarn lint         # ESLint + Prettier
+yarn dist         # build the installable package (.tgz)
+```
+
+For a prerelease package, use `yarn companion-module-build --prerelease`. Without the flag, the package is always marked as a stable release.
+
+### Releasing
+
+1. Set the version in `package.json` and `companion/manifest.json` (e.g. `3.1.5` or `3.1.5-beta.1`, with `isPrerelease` accordingly) and add the version to `CHANGELOG.md`.
+2. Tag the commit with exactly that version, with or without a leading `v` (e.g. `v3.1.5`). The Bitfocus checks fail if the tag and `package.json` don't match.
+3. Publish the version in the [Bitfocus developer portal](https://developer.bitfocus.io). Only versions published there appear in Companion's module library; a GitHub tag or release alone is not enough.
+
+## Tested versions
+
+- **Companion:** 5.0.5
+- **Pandoras Box:** 8.11.3
 
 ## License
 
-See project license file.
+MIT, see [LICENSE.txt](LICENSE.txt).
 
 ## Support
 
-For issues and feature requests, contact twoloox GmbH
+For issues and feature requests, contact twoloox GmbH or open an issue at https://github.com/bitfocus/companion-module-twoloox-pandorasbox/issues.
