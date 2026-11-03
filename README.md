@@ -30,22 +30,24 @@ User documentation (configuration, actions, feedbacks, variables) is in [compani
 
 ## Development
 
-Requires Node.js 22 and Yarn 4 via Corepack (`corepack enable`).
+Requires Node.js 26 and Yarn 4 via Corepack (`corepack enable`). `yarn install` also sets up a pre-commit hook that runs `lint-staged`.
 
 ```bash
 yarn install
 yarn build        # compile TypeScript to dist/
 yarn lint         # ESLint + Prettier
-yarn dist         # build the installable package (.tgz)
+yarn format       # apply Prettier to the whole repository
+yarn package      # build, then create the installable package (.tgz)
 ```
 
-For a prerelease package, use `yarn companion-module-build --prerelease`. Without the flag, the package is always marked as a stable release.
+For a prerelease package, use `yarn package --prerelease`. Without the flag, the package is always marked as a stable release.
 
 ### Releasing
 
-1. Set the version in `package.json` and `companion/manifest.json` (e.g. `3.1.5` or `3.1.5-beta.1`, with `isPrerelease` accordingly) and add the version to `CHANGELOG.md`.
-2. Tag the commit with exactly that version, with or without a leading `v` (e.g. `v3.1.5`). The Bitfocus checks fail if the tag and `package.json` don't match.
-3. Publish the version in the [Bitfocus developer portal](https://developer.bitfocus.io). Only versions published there appear in Companion's module library; a GitHub tag or release alone is not enough.
+1. Set the version in `package.json` and `companion/manifest.json` (e.g. `3.1.6` or `3.1.6-beta.1`, with `isPrerelease` accordingly) and add the version to `CHANGELOG.md`.
+2. Commit, then tag exactly that commit with exactly that version, with or without a leading `v` (e.g. `v3.1.6`). The Bitfocus checks fail if the tag and `package.json` don't match.
+3. Publishing a GitHub release for the tag attaches the package automatically (`release.yaml`).
+4. Publish the version in the [Bitfocus developer portal](https://developer.bitfocus.io). Only versions published there, and approved in the module review, appear in Companion's module library; a GitHub tag or release alone is not enough.
 
 ## Tested versions
 
@@ -54,7 +56,7 @@ For a prerelease package, use `yarn companion-module-build --prerelease`. Withou
 
 ## License
 
-MIT, see [LICENSE.txt](LICENSE.txt).
+MIT, see [LICENSE](LICENSE).
 
 ## Support
 

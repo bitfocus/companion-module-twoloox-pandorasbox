@@ -15,4 +15,19 @@ const convertTransportStateFeedback: CompanionStaticUpgradeScript<DeviceConfig> 
 	return { updatedConfig: null, updatedActions: [], updatedFeedbacks }
 }
 
-export const UpgradeScripts: CompanionStaticUpgradeScript<DeviceConfig>[] = [convertTransportStateFeedback]
+// 3.1.6: "Remaining cue under threshold" ('remaining_threshold') got a "Sequence" option in 3.1.1.
+// Feedbacks saved before that have no sequence and would never become active - give them sequence 1.
+const addSequenceToRemainingThreshold: CompanionStaticUpgradeScript<DeviceConfig> = (_context, props) => {
+	const updatedFeedbacks: CompanionMigrationFeedback[] = []
+	for (const feedback of props.feedbacks) {
+		if (feedback.feedbackId !== 'remaining_threshold' || feedback.options.sequence !== undefined) continue
+		feedback.options.sequence = { isExpression: false, value: 1 }
+		updatedFeedbacks.push(feedback)
+	}
+	return { updatedConfig: null, updatedActions: [], updatedFeedbacks }
+}
+
+export const UpgradeScripts: CompanionStaticUpgradeScript<DeviceConfig>[] = [
+	convertTransportStateFeedback,
+	addSequenceToRemainingThreshold,
+]

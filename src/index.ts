@@ -2,16 +2,11 @@ import {
 	InstanceBase,
 	InstanceStatus,
 	type SomeCompanionConfigField,
-	type CompanionActionSchemaWithoutResult,
-	type CompanionActionSchemaWithResult,
-	type CompanionFeedbackSchema,
-	type CompanionOptionValues,
 	type CompanionVariableValues,
-	type JsonValue,
 } from '@companion-module/base'
-import { GetActionsList } from './actions.js'
+import { GetActionsList, type ActionSchemas } from './actions.js'
 import { GetConfigFields, type DeviceConfig } from './config.js'
-import { FeedbackId, GetFeedbacksList } from './feedback.js'
+import { FeedbackId, GetFeedbacksList, type FeedbackSchemas } from './feedback.js'
 import { GetPresetsList } from './presets.js'
 import { PBClient, type TransportState, type SequenceInfo, type CueInfo } from './client.js'
 import {
@@ -39,12 +34,8 @@ import { UpgradeScripts } from './upgrades.js'
 export type ModuleSchema = {
 	config: DeviceConfig
 	secrets: undefined
-	actions: Record<
-		string,
-		| CompanionActionSchemaWithoutResult<CompanionOptionValues>
-		| CompanionActionSchemaWithResult<CompanionOptionValues, JsonValue>
-	>
-	feedbacks: Record<string, CompanionFeedbackSchema<CompanionOptionValues>>
+	actions: ActionSchemas
+	feedbacks: FeedbackSchemas
 	variables: CompanionVariableValues
 }
 
@@ -190,6 +181,9 @@ export default class TwolooxPandorasInstance extends InstanceBase<ModuleSchema> 
 					this.checkFeedbacks(FeedbackId.SequenceTransportState)
 				},
 				onSequenceTime: (seqId, h, m, s, f) => {
+					// Polled up to 30x/sec per sequence - a stopped or paused sequence keeps answering with the same time.
+					const previous = this.sequenceTimes.get(seqId)
+					if (previous && previous.h === h && previous.m === m && previous.s === s && previous.f === f) return
 					this.sequenceTimes.set(seqId, { h, m, s, f })
 					this.setSequenceValues(seqId, (seqs) => ({
 						...GetSequenceTimeVariableValues(seqs, this.sequenceTimes),

@@ -2,9 +2,28 @@
 
 All notable changes to this module are documented in this file.
 
+## [3.1.6] - 2026-11-03
+
+First release in the Companion module library since 3.0.1, so it also includes all changes listed under 3.1.0 to 3.1.5 below. Requires Companion 5.0 or later. This version addresses the module review of 3.1.4.
+
+### Changed
+
+- The module now runs on Node.js 26, like the current module template.
+- The fixed choice fields Transport, SMPTE Mode, Direction, Ignore, the Set Playhead mode and Fade Curve can no longer be switched to expression mode. In expression mode they expected internal codes, e.g. `3` for Pause.
+- Unchanged timecode values are no longer sent to Companion again.
+
+### Fixed
+
+- "Remaining cue under threshold" feedbacks saved with 3.0.1 or earlier had no sequence and never became active. They are now set to sequence 1 automatically.
+
+### Development
+
+- Repository aligned with the module template: `package`, `format` and `postinstall` scripts (replacing `dist` and `prepare`), `LICENSE` instead of `LICENSE.txt`, `.prettierignore`, `.husky/pre-commit`, root-anchored `.gitignore` entries, and the `node.yaml` and `release.yaml` workflows. Publishing a GitHub release now attaches the package automatically.
+- Action and feedback options are typed, so a wrong option id fails the build.
+
 ## [3.1.5] - 2026-11-02
 
-First release in the Companion module library since 3.0.1, so it also includes all changes listed under 3.1.0 to 3.1.4 below. Requires Companion 5.0 or later.
+Not published in the Companion module library.
 
 ### Changed
 

@@ -1,26 +1,16 @@
-# Dependencies
 node_modules/
 package-lock.json
-/.yarn
-
-# Build output
-dist/
-pkg/
-*.tgz
+/pkg
+/*.tgz
+/dist
 DEBUG-*
+/.yarn
+/.vscode
 
-# IDE
-.vscode/
+# Additional entries for this module
 .idea/
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# Logs
 *.log
-npm-debug.log*
-
-# Environment
 .env
 .env.local

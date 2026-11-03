@@ -151,7 +151,7 @@ class SequenceConnection {
 				this.stopPolling()
 			})
 
-			sock.on('data', (chunk) => this.onSocketData(chunk))
+			sock.on('data', (chunk) => this.onSocketData(typeof chunk === 'string' ? Buffer.from(chunk) : chunk))
 
 			sock.connect({ host: this.host, port: PR_PORT }, () => {
 				this.connected = true
@@ -441,7 +441,7 @@ export class PBClient {
 				this.pollHandlers.onDisconnected?.()
 			})
 
-			sock.on('data', (chunk) => this.onSocketData(chunk))
+			sock.on('data', (chunk) => this.onSocketData(typeof chunk === 'string' ? Buffer.from(chunk) : chunk))
 
 			sock.connect({ host: this.host, port: PR_PORT }, () => {
 				this.connecting = false
