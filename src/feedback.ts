@@ -1,4 +1,4 @@
-import type { CompanionFeedbackDefinitions, CompanionFeedbackBooleanEvent } from '@companion-module/base'
+import type { CompanionFeedbackDefinitions } from '@companion-module/base'
 import type { TransportState } from './client.js'
 
 // The former global 'transport_state' feedback was removed in 3.1.2 (the device only reports
@@ -6,6 +6,15 @@ import type { TransportState } from './client.js'
 export enum FeedbackId {
 	RemainingCueThreshold = 'remaining_threshold',
 	SequenceTransportState = 'sequence_transport_state',
+}
+
+// Sequence dropdowns allow typing in a custom sequence id, which arrives as a string.
+export type FeedbackSchemas = {
+	[FeedbackId.RemainingCueThreshold]: { type: 'boolean'; options: { sequence: number | string; threshold: number } }
+	[FeedbackId.SequenceTransportState]: {
+		type: 'boolean'
+		options: { sequence: number | string; state: 'Play' | 'Pause' | 'Stop' }
+	}
 }
 
 export interface SequenceCountdown {
@@ -19,7 +28,7 @@ export function GetFeedbacksList(
 	getSequenceChoices: () => { id: number; label: string }[],
 	getSequenceState: (seqId: number) => TransportState,
 	getSequenceCountdown: (seqId: number) => SequenceCountdown | undefined,
-): CompanionFeedbackDefinitions {
+): CompanionFeedbackDefinitions<FeedbackSchemas> {
 	return {
 		[FeedbackId.RemainingCueThreshold]: {
 			type: 'boolean',
@@ -45,7 +54,7 @@ export function GetFeedbacksList(
 				},
 			],
 			defaultStyle: {},
-			callback: (fb: CompanionFeedbackBooleanEvent) => {
+			callback: (fb) => {
 				const seqId = Number(fb.options.sequence)
 				const countdown = getSequenceCountdown(seqId)
 				if (!countdown) return false
@@ -79,7 +88,7 @@ export function GetFeedbacksList(
 				},
 			],
 			defaultStyle: {},
-			callback: (fb: CompanionFeedbackBooleanEvent) => {
+			callback: (fb) => {
 				const seqId = Number(fb.options.sequence)
 				const state = getSequenceState(seqId)
 				return state === fb.options.state

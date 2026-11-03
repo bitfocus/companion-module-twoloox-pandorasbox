@@ -29,6 +29,33 @@ export interface SequenceChoice {
 	label: string
 }
 
+// Sequence dropdowns allow typing in a custom sequence id, which arrives as a string.
+type SequenceOption = number | string
+type NoOptions = Record<string, never>
+
+export type ActionSchemas = {
+	[ActionId.SeqTransport]: { options: { mode: number; seq: SequenceOption } }
+	[ActionId.ToggleSequence]: { options: { sequence: SequenceOption } }
+	[ActionId.SelectSequence]: { options: { sequence: SequenceOption } }
+	[ActionId.SetSmpteMode]: { options: { sequence: SequenceOption; mode: number } }
+	[ActionId.GotoCue]: { options: { seq: SequenceOption; cue: number } }
+	[ActionId.NextLastCue]: { options: { seq: SequenceOption; isNext: number } }
+	[ActionId.IgnoreNextCue]: { options: { seq: SequenceOption; doIgnore: number } }
+	[ActionId.SetPlayhead]: { options: { seq: SequenceOption; mode: 'absolute' | 'relative'; time: string } }
+	[ActionId.ApplyView]: { options: { view: number } }
+	[ActionId.SaveProject]: { options: NoOptions }
+	[ActionId.ToggleFullscreen]: { options: { site: number } }
+	[ActionId.SetSiteIp]: { options: { site: number; ip: string } }
+	[ActionId.ClearAllActive]: { options: NoOptions }
+	[ActionId.StoreActive]: { options: { seq: SequenceOption } }
+	[ActionId.StoreActiveToBeginning]: { options: { seq: SequenceOption } }
+	[ActionId.ResetAll]: { options: NoOptions }
+	[ActionId.RefreshSequences]: { options: NoOptions }
+	[ActionId.FadeSequenceVisibility]: {
+		options: { seq: SequenceOption; value: number; duration: number; curve: FadeCurve }
+	}
+}
+
 interface ParsedPlayheadTime {
 	h: number
 	m: number
@@ -124,7 +151,7 @@ export function GetActionsList(
 	getSequenceChoices: () => SequenceChoice[],
 	getSequenceState: (seqId: number) => TransportState,
 	getSequenceTime: (seqId: number) => SequenceTime | undefined,
-): CompanionActionDefinitions {
+): CompanionActionDefinitions<ActionSchemas> {
 	return {
 		[ActionId.SeqTransport]: {
 			name: 'Sequence Transport',
@@ -133,6 +160,7 @@ export function GetActionsList(
 					type: 'dropdown',
 					label: 'Transport',
 					id: 'mode',
+					disableAutoExpression: true,
 					default: 1,
 					choices: [
 						{ id: 1, label: 'Play' },
@@ -212,6 +240,7 @@ export function GetActionsList(
 					type: 'dropdown',
 					label: 'SMPTE Mode',
 					id: 'mode',
+					disableAutoExpression: true,
 					default: 0,
 					choices: [
 						{ id: 0, label: 'None (Off)' },
@@ -262,6 +291,7 @@ export function GetActionsList(
 					type: 'dropdown',
 					label: 'Direction',
 					id: 'isNext',
+					disableAutoExpression: true,
 					default: 1,
 					choices: [
 						{ id: 1, label: 'Next cue' },
@@ -291,6 +321,7 @@ export function GetActionsList(
 					type: 'dropdown',
 					label: 'Ignore',
 					id: 'doIgnore',
+					disableAutoExpression: true,
 					default: 1,
 					choices: [
 						{ id: 1, label: 'Ignore next cue' },
@@ -320,6 +351,7 @@ export function GetActionsList(
 					type: 'dropdown',
 					label: 'Mode',
 					id: 'mode',
+					disableAutoExpression: true,
 					default: 'absolute',
 					choices: [
 						{ id: 'absolute', label: 'Absolute (go to this time)' },
@@ -492,6 +524,7 @@ export function GetActionsList(
 					type: 'dropdown',
 					label: 'Fade Curve',
 					id: 'curve',
+					disableAutoExpression: true,
 					default: 'linear',
 					choices: [
 						{ id: 'linear', label: 'Linear (recommended, evenly spaced)' },
@@ -511,7 +544,7 @@ export function GetActionsList(
 					Number(evt.options.seq),
 					rawValue,
 					Number(evt.options.duration),
-					evt.options.curve as FadeCurve,
+					evt.options.curve,
 				)
 			},
 		},
