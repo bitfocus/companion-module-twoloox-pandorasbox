@@ -1,4 +1,5 @@
 import type { CompanionActionDefinitions } from '@companion-module/base'
+import net from 'net'
 import { PBClient, type TransportState, type FadeCurve } from './client.js'
 import { SEQUENCE_OPACITY_MAX } from './constants.js'
 import type { SequenceTime } from './variables.js'
@@ -22,6 +23,7 @@ export enum ActionId {
 	ResetAll = 'reset_all',
 	RefreshSequences = 'refresh_sequences',
 	FadeSequenceVisibility = 'fade_sequence_visibility',
+	SwitchServer = 'switch_server',
 }
 
 export interface SequenceChoice {
@@ -51,6 +53,7 @@ export type ActionSchemas = {
 	[ActionId.StoreActiveToBeginning]: { options: { seq: SequenceOption } }
 	[ActionId.ResetAll]: { options: NoOptions }
 	[ActionId.RefreshSequences]: { options: NoOptions }
+	[ActionId.SwitchServer]: { options: { host: string; domain: number; confirm: string } }
 	[ActionId.FadeSequenceVisibility]: {
 		options: { seq: SequenceOption; value: number; duration: number; curve: FadeCurve }
 	}
@@ -170,6 +173,8 @@ export function GetActionsList(
 	getSequenceChoices: () => SequenceChoice[],
 	getSequenceState: (seqId: number) => TransportState,
 	getSequenceTime: (seqId: number) => SequenceTime | undefined,
+	switchServer: (host: string, domain: number) => void,
+	logWarning: (message: string) => void,
 ): CompanionActionDefinitions<ActionSchemas> {
 	return {
 		[ActionId.SeqTransport]: {
@@ -533,6 +538,56 @@ export function GetActionsList(
 				const client = getClient()
 				if (!client) return
 				await client.resetAll()
+			},
+		},
+		[ActionId.SwitchServer]: {
+			name: 'Switch Server (Target IP and Domain)',
+			description:
+				'Connects to another Pandoras Box server, e.g. main or backup, and saves it as the new connection setting. Same as entering the values in the connection settings and pressing Save.',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Target IP',
+					id: 'host',
+					default: '',
+					useVariables: true,
+					tooltip: 'IPv4 address of the Pandoras Box server, e.g. 192.168.1.100.',
+				},
+				{
+					type: 'number',
+					label: 'Domain',
+					id: 'domain',
+					default: 0,
+					min: 0,
+					max: 2147483647,
+					step: 1,
+				},
+				{
+					type: 'textinput',
+					label: 'Type YES to confirm',
+					id: 'confirm',
+					default: '',
+					disableAutoExpression: true,
+					description:
+						'At your own risk: pressing the button immediately disconnects from the current server and connects to the one above. Nothing happens unless this field contains YES.',
+				},
+			],
+			callback: (evt) => {
+				if (evt.options.confirm !== 'YES') {
+					logWarning('Switch Server: not confirmed with YES, nothing changed')
+					return
+				}
+				const host = typeof evt.options.host === 'string' ? evt.options.host.trim() : ''
+				const domain = Number(evt.options.domain)
+				if (!net.isIPv4(host)) {
+					logWarning(`Switch Server: "${host}" is not a valid IPv4 address, nothing changed`)
+					return
+				}
+				if (!Number.isInteger(domain) || domain < 0) {
+					logWarning(`Switch Server: "${String(evt.options.domain)}" is not a valid domain, nothing changed`)
+					return
+				}
+				switchServer(host, domain)
 			},
 		},
 		[ActionId.RefreshSequences]: {

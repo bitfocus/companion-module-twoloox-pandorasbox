@@ -10,7 +10,7 @@ Requires **Companion 5.0 or later**. For older Companion versions, use module ve
 - **Domain:** Pandoras Box domain, default `0`. If the connection stays in an error state, check that the domain matches.
 - **Log protocol traffic (debug):** Off by default. For troubleshooting, enable it and set the connection's log level in Companion to Debug to log every message sent and received.
 
-After connecting, the module finds all sequences by itself and keeps the list up to date every 10 seconds. If the connection drops, or Pandoras Box stops answering for about 5 seconds (e.g. a network cable was pulled), it reconnects automatically every 10 seconds.
+After connecting, the module finds all sequences by itself and keeps the list up to date every 10 seconds. If the connection drops, or Pandoras Box stops answering for about 5 seconds (e.g. a network cable was pulled), it reconnects automatically every 3 seconds. Changing the Target IP or Domain takes effect immediately, so switching between a main and a backup server takes well under a second when both are running.
 
 ## Actions
 
@@ -40,6 +40,17 @@ After connecting, the module finds all sequences by itself and keeps the list up
 - Toggle Fullscreen (Site ID)
 - Set Site IP by ID
 - Recall GUI View
+
+**Connection**
+
+- **Switch Server (Target IP and Domain):** connects to another Pandoras Box server, see below.
+
+### Switch Server
+
+- Connects to the given Target IP and Domain and saves them as the new connection setting, the same as entering them in the connection settings and pressing Save.
+- For main/backup switching, put the action on two buttons: one with the main server, one with the backup server. When both servers are running, the switch takes well under a second.
+- **At your own risk:** pressing the button immediately disconnects from the current server. The action only runs when the field "Type YES to confirm" contains exactly `YES`.
+- Invalid IP addresses (only IPv4, no computer names) and invalid domains are ignored and logged as a warning, nothing changes.
 
 ### Set Playhead
 

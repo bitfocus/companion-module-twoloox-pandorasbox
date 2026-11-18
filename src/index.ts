@@ -47,7 +47,10 @@ function totalSeconds(t: SequenceTime): number {
 
 export default class TwolooxPandorasInstance extends InstanceBase<ModuleSchema> {
 	private client: PBClient | undefined
+	private config: DeviceConfig | undefined
 	private sequences: SequenceInfo[] = []
+	// False until the first sequence list of the current connection has arrived.
+	private sequencesReceived = false
 	private sequenceRefreshTimer: NodeJS.Timeout | undefined
 	private sequenceStates: Map<number, TransportState> = new Map()
 	private sequenceTimes: Map<number, SequenceTime> = new Map()
@@ -55,7 +58,8 @@ export default class TwolooxPandorasInstance extends InstanceBase<ModuleSchema> 
 	private sequenceCueInfos: Map<number, CueInfo> = new Map()
 	private sequenceOpacities: Map<number, number> = new Map()
 	private reconnectTimer: NodeJS.Timeout | undefined
-	private static readonly RECONNECT_INTERVAL_MS = 10000
+	// Short, so switching to a server that is just coming up (e.g. main/backup) recovers within seconds.
+	private static readonly RECONNECT_INTERVAL_MS = 3000
 
 	public getSequenceChoices(): { id: number; label: string }[] {
 		if (this.sequences.length === 0) {
@@ -74,6 +78,8 @@ export default class TwolooxPandorasInstance extends InstanceBase<ModuleSchema> 
 				() => this.getSequenceChoices(),
 				(seqId) => this.sequenceStates.get(seqId) || 'Unknown',
 				(seqId) => this.sequenceTimes.get(seqId),
+				(host, domain) => this.switchServer(host, domain),
+				(message) => this.log('warn', message),
 			),
 		)
 	}
@@ -113,8 +119,19 @@ export default class TwolooxPandorasInstance extends InstanceBase<ModuleSchema> 
 	}
 
 	public async configUpdated(config: DeviceConfig): Promise<void> {
+		this.config = config
 		this.clearReconnectTimer()
 		await this.connectToDevice(config)
+	}
+
+	// Same as entering the values in the connection settings and pressing Save. Companion stores a config
+	// saved by the module itself but deliberately doesn't call configUpdated for it, so apply it here.
+	// Not awaited: an unreachable server may take several seconds, longer than an action may run.
+	private switchServer(host: string, domain: number): void {
+		const config: DeviceConfig = { debugTraffic: false, ...this.config, host, domain: String(domain) }
+		this.log('info', `Switch Server: connecting to ${host}, domain ${domain}`)
+		this.saveConfig(config)
+		void this.configUpdated(config)
 	}
 
 	private clearReconnectTimer(): void {
@@ -142,6 +159,7 @@ export default class TwolooxPandorasInstance extends InstanceBase<ModuleSchema> 
 		this.client = undefined
 		this.resetSequenceState()
 		this.sequences = []
+		this.sequencesReceived = false
 
 		const host = config.host?.trim()
 		const domain = Number(config.domain ?? 0)
@@ -222,14 +240,21 @@ export default class TwolooxPandorasInstance extends InstanceBase<ModuleSchema> 
 					if (this.client !== client) return
 					// Runs on every refresh, not just on changes: it also replaces dead timecode connections.
 					client.setPollSequences(sequences.map((s) => s.id))
-					// The list is re-fetched every 10s - only push new definitions when something changed.
-					if (JSON.stringify(sequences) === JSON.stringify(this.sequences)) return
+					// The list is re-fetched every 10s - only push new definitions when something changed. The first list
+					// of a connection is always pushed: after switching to a server without any sequences, the previous
+					// server's sequences would otherwise stay in the variables, dropdowns and presets.
+					if (this.sequencesReceived && JSON.stringify(sequences) === JSON.stringify(this.sequences)) return
+					this.sequencesReceived = true
 					this.log('info', `Received ${sequences.length} sequences from Pandoras Box`)
 					this.sequences = sequences
 					this.updateActionDefinitions()
 					this.updateFeedbackDefinitions()
 					this.updateSequenceVariables()
 					this.updatePresetDefinitions()
+				},
+				onConnectionError: (err) => {
+					if (this.client !== client) return
+					this.log('warn', `Connection error: ${err.message}`)
 				},
 				onDebug: (message) => {
 					this.log('debug', `[PBClient] ${message}`)

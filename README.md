@@ -16,6 +16,7 @@ User documentation (configuration, actions, feedbacks, variables) is in [compani
 - **Feedbacks:** sequence transport state, remaining time until the next cue below a threshold
 - **Presets** generated per sequence, plus general presets
 - Automatic sequence discovery and automatic reconnect
+- **Switch Server** action for switching between main and backup servers from a button
 
 ## Installation
 
@@ -27,7 +28,6 @@ User documentation (configuration, actions, feedbacks, variables) is in [compani
 - **Main TCP connection:** sequence discovery, transport/opacity polling (5x per second), commands. Queries whose answers don't identify their sequence run strictly one at a time, so every answer is matched to the right request.
 - **One TCP connection per sequence:** timecode, countdown and cue info, polled 30x per second while playing and 5x per second otherwise.
 - **Protocol notes:** mixed endianness (big-endian headers, little-endian sequence ID lists), opacity is read in 0-65535 but written in 0-255, error answers don't say which request failed.
-
 
 ## Tested versions
 

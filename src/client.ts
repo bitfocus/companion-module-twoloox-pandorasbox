@@ -72,6 +72,10 @@ const FADE_CURVES: Record<FadeCurve, (t: number) => number> = {
 // The device answered a request with its generic error response (command id -1).
 class DeviceErrorResponse extends Error {}
 
+// Without a limit, connecting to an address that never answers stays pending until the operating system
+// gives up (about 20 s on Windows, about 2 min on Linux), and only then can the next retry start.
+const CONNECT_TIMEOUT_MS = 5000
+
 interface PendingRequest {
 	cmdId: CommandId
 	parts: Buffer[]
@@ -91,6 +95,8 @@ export interface PollHandlers {
 	onSequenceOpacity?: (seqId: number, value: number) => void
 	onSequenceTransport?: (seqId: number, state: TransportState) => void
 	onSequencesUpdated?: (sequences: SequenceInfo[]) => void
+	/** Socket error on an established connection; the following close is reported via onDisconnected */
+	onConnectionError?: (err: Error) => void
 	onError?: (err: Error) => void
 	onDebug?: (message: string) => void
 }
@@ -140,23 +146,27 @@ class SequenceConnection {
 		await new Promise<void>((resolve, reject) => {
 			const sock = new net.Socket()
 			this.socket = sock
+			let established = false
+			const connectTimer = setTimeout(() => sock.destroy(new Error('Connection timed out')), CONNECT_TIMEOUT_MS)
 
 			sock.once('error', (err) => {
 				this.onDebug?.(`SeqConn[${this.seqId}] error: ${err.message}`)
-				this.connected = false
-				this.socket = null
 				reject(err)
 			})
 
 			sock.once('close', () => {
+				clearTimeout(connectTimer)
 				this.connected = false
-				this.socket = null
+				if (this.socket === sock) this.socket = null
 				this.stopPolling()
+				if (!established) reject(new Error('Connection closed before it was established'))
 			})
 
 			sock.on('data', (chunk) => this.onSocketData(typeof chunk === 'string' ? Buffer.from(chunk) : chunk))
 
 			sock.connect({ host: this.host, port: PR_PORT }, () => {
+				clearTimeout(connectTimer)
+				established = true
 				this.connected = true
 				this.lastRxAt = Date.now()
 				resolve()
@@ -440,25 +450,34 @@ export class PBClient {
 		await new Promise<void>((resolve, reject) => {
 			const sock = new net.Socket()
 			this.socket = sock
+			let established = false
+			const connectTimer = setTimeout(
+				() => sock.destroy(new Error(`Connection to ${this.host} timed out`)),
+				CONNECT_TIMEOUT_MS,
+			)
 
+			// A failed attempt is reported only through the rejected promise (the caller sets the status and
+			// retries), and a dropped connection only through onDisconnected - never as a separate error status.
 			sock.once('error', (err) => {
-				this.connecting = false
-				this.socket = null
-				this.pollHandlers.onError?.(err)
+				if (established) this.pollHandlers.onConnectionError?.(err)
 				reject(err)
 			})
 
 			sock.once('close', () => {
+				clearTimeout(connectTimer)
 				this.connecting = false
-				this.socket = null
+				if (this.socket === sock) this.socket = null
 				this.stopPolling()
 				this.failAllRequests(new Error('Connection closed'))
-				this.pollHandlers.onDisconnected?.()
+				if (established) this.pollHandlers.onDisconnected?.()
+				else reject(new Error('Connection closed before it was established'))
 			})
 
 			sock.on('data', (chunk) => this.onSocketData(typeof chunk === 'string' ? Buffer.from(chunk) : chunk))
 
 			sock.connect({ host: this.host, port: PR_PORT }, () => {
+				clearTimeout(connectTimer)
+				established = true
 				this.connecting = false
 				resolve()
 				this.startPolling()

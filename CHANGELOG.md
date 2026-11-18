@@ -2,24 +2,29 @@
 
 All notable changes to this module are documented in this file.
 
-## [3.1.7-beta.1] - 2026-11-09
+## [3.1.7] - 2026-11-18
 
-Addresses the module review of 3.1.6.
+Addresses the module review of 3.1.6 and makes switching servers more reliable.
 
 ### Added
 
+- Action "Switch Server (Target IP and Domain)": connects to another Pandoras Box server and saves it as the new connection setting, the same as entering the values in the connection settings and pressing Save. Put it on two buttons for switching between a main and a backup server. Use at your own risk: it only runs when the confirmation field contains `YES`, and invalid IP addresses or domains are ignored.
 - Set Playhead accepts times with the units `h`, `m`, `s` and `f` (frames), e.g. `2h3m5s`, `3m5s` or `5s10f`. Larger values are converted: `120m90s` = 2 hours 1 minute 30 seconds. Other units such as `ms` are ignored.
 - Set Playhead explains its input formats in a tooltip and a short description below the Time field.
 
 ### Fixed
 
-- Saving corrected connection settings (e.g. the right Domain) while the module was retrying could switch the connection back to the old settings a few seconds later. The connection then failed again until the settings were saved once more or the connection was disabled and enabled.
+- Saving new connection settings (e.g. a new Target IP after moving to another server, or the right Domain) while the module was retrying could switch the connection back to the old settings a few seconds later. The connection then failed again until the settings were saved once more or the connection was disabled and enabled.
+- After switching to a Pandoras Box server without any sequences, the variables, dropdowns and presets still showed the sequences of the previous server.
+- A connection attempt to an address that doesn't answer now gives up after 5 seconds. Before, it took about 20 seconds (Windows) to 2 minutes (Linux) until the next attempt could start.
+- A failed connection attempt briefly showed the status "Unknown error" before "Connection failure".
 - After disabling the connection while it was retrying, the module could still try to connect once more.
 - A connection that stops answering without being closed (e.g. network cable pulled, switch down, Pandoras Box not responding) is now detected after about 5 seconds and re-established automatically. Before, the status stayed OK with frozen values until the operating system gave up on the connection, which can take many minutes.
 - Set Playhead: decimals such as `10.5`, input with spaces and other text are now ignored. Before, the other characters were dropped and the sequence jumped to an unexpected position (`10.5` went to 1 second 5 frames).
 
 ### Changed
 
+- The module retries a failed or lost connection every 3 seconds instead of every 10 seconds. Switching to a server that is just coming up (e.g. main/backup) connects within seconds.
 - Unchanged countdown values are no longer sent to Companion again.
 
 ## [3.1.6] - 2026-11-03
