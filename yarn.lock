@@ -703,7 +703,7 @@ __metadata:
     lint-staged: "npm:^17.6.0"
     prettier: "npm:^3.8.1"
     rimraf: "npm:^6.1.4"
-    typescript: "npm:^6.0.3"
+    typescript: "npm:~6.0.3"
     typescript-eslint: "npm:^8.73.0"
   languageName: unknown
   linkType: soft
@@ -1678,7 +1678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^6.0.3":
+"typescript@npm:~6.0.3":
   version: 6.0.3
   resolution: "typescript@npm:6.0.3"
   bin:
@@ -1688,7 +1688,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^6.0.3#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A~6.0.3#optional!builtin<compat/typescript>":
   version: 6.0.3
   resolution: "typescript@patch:typescript@npm%3A6.0.3#optional!builtin<compat/typescript>::version=6.0.3&hash=5786d5"
   bin:
